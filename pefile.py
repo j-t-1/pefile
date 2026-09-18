@@ -3246,8 +3246,8 @@ class PE:
         if self.OPTIONAL_HEADER.NumberOfRvaAndSizes > 0x10:
             self.__warnings.append(
                 "Suspicious NumberOfRvaAndSizes in the Optional Header. "
-                "Normal values are never larger than 0x10, the value is: 0x%x"
-                % self.OPTIONAL_HEADER.NumberOfRvaAndSizes
+                "Normal values are never larger than 0x10, the value is: "
+                f"{self.OPTIONAL_HEADER.NumberOfRvaAndSizes:#x}"
             )
 
         MAX_ASSUMED_VALID_NUMBER_OF_RVA_AND_SIZES = 0x100
@@ -3331,22 +3331,21 @@ class PE:
             if ep_offset > len(self.__data__):
                 self.__warnings.append(
                     "Possibly corrupt file. AddressOfEntryPoint lies outside the "
-                    "file. AddressOfEntryPoint: 0x%x"
-                    % self.OPTIONAL_HEADER.AddressOfEntryPoint
+                    f"file. AddressOfEntryPoint: {self.OPTIONAL_HEADER.AddressOfEntryPoint:#x}"
                 )
 
         else:
             self.__warnings.append(
                 "AddressOfEntryPoint lies outside the sections' boundaries. "
-                "AddressOfEntryPoint: 0x%x" % self.OPTIONAL_HEADER.AddressOfEntryPoint
+                f"AddressOfEntryPoint: {self.OPTIONAL_HEADER.AddressOfEntryPoint:#x}"
             )
 
         if not fast_load:
             self.full_load()
 
     def parse_rich_header(self):
-        """Parses the rich header
-        see https://www.ntcore.com/files/richsign.htm for more information
+        """Parses the Rich Header
+        https://www.ntcore.com/files/richsign.htm
 
         Structure:
         00 DanS ^ checksum, checksum, checksum, checksum
@@ -3359,17 +3358,29 @@ class PE:
         DANS = 0x536E6144  # 'DanS' as dword
         RICH = 0x68636952  # 'Rich' as dword
 
+        # https://www.virusbulletin.com/virusbulletin/2020/01/vb2019-paper-rich-headers-leveraging-mysterious-artifact-pe-format
         rich_index = self.__data__.find(
-            b"Rich", 0x80, self.OPTIONAL_HEADER.get_file_offset()
+            b"Rich",
+            0x50,  # The null DOS stub plus sixteen bytes
+            self.OPTIONAL_HEADER.get_file_offset()
         )
         if rich_index == -1:
             return None
+
+        dans_index = self.__data__.find(
+            bytes(x ^ y for x, y in zip(b'DanS', self.__data__[rich_index + 4 : rich_index + 8])),
+            0x40,  # The null DOS stub
+            self.OPTIONAL_HEADER.get_file_offset()
+        )
+        if dans_index == -1:
+            # 'This program cannot be run in DOS mode' default stub
+            dans_index = 0x80
 
         # Read a block of data
         try:
             # The end of the structure is 8 bytes after the start of the Rich
             # string (although there is padding after this).
-            rich_data = self.__data__[0x80 : rich_index + 8]
+            rich_data = self.__data__[dans_index : rich_index + 8]
             # Make the data have length a multiple of 4, otherwise the
             # subsequent parsing will fail. It's not impossible that we retrieve
             # truncated data that is not a multiple.
@@ -4085,14 +4096,14 @@ class PE:
         except PEFormatError:
             self.__warnings.append(
                 "Invalid IMAGE_DYNAMIC_RELOCATION_TABLE information. Can't read "
-                "data at RVA: 0x%x" % rva
+                f"data at RVA: {rva:#x}"
             )
             return None
 
         if image_dynamic_reloc_table_struct.Version != 1:
             self.__warnings.append(
-                "No parsing available for IMAGE_DYNAMIC_RELOCATION_TABLE.Version = %d"
-                % image_dynamic_reloc_table_struct.Version
+                "No parsing available for IMAGE_DYNAMIC_RELOCATION_TABLE.Version = "
+                f"{image_dynamic_reloc_table_struct.Version}"
             )
             return None
 
@@ -4274,8 +4285,8 @@ class PE:
             # rlc.VirtualAddress must lie within the Image
             if rlc.VirtualAddress > self.OPTIONAL_HEADER.SizeOfImage:
                 self.__warnings.append(
-                    "Invalid relocation information. VirtualAddress outside"
-                    " of Image: 0x%x" % rlc.VirtualAddress
+                    "Invalid relocation information. "
+                    f"VirtualAddress outside of Image: {rlc.VirtualAddress:#x}"
                 )
                 break
 
@@ -4283,8 +4294,8 @@ class PE:
             # (It's a rather loose sanity test)
             if rlc.SizeOfBlock > self.OPTIONAL_HEADER.SizeOfImage:
                 self.__warnings.append(
-                    "Invalid relocation information. SizeOfBlock too large"
-                    ": %d" % rlc.SizeOfBlock
+                    "Invalid relocation information. "
+                    f"SizeOfBlock too large: {rlc.SizeOfBlock}"
                 )
                 break
 
@@ -4618,7 +4629,7 @@ class PE:
         if level > MAX_RESOURCE_DEPTH:
             self.__warnings.append(
                 "Error parsing the resources directory. "
-                "Excessively nested table depth %d (>%s)" % (level, MAX_RESOURCE_DEPTH)
+                f"Excessively nested table depth {level} (>{MAX_RESOURCE_DEPTH})"
             )
             return None
 
@@ -4631,7 +4642,7 @@ class PE:
         except PEFormatError:
             self.__warnings.append(
                 "Invalid resources directory. Can't read "
-                "directory data at RVA: 0x%x" % rva
+                f"directory data at RVA: {rva:#x}"
             )
             return None
 
@@ -4648,7 +4659,7 @@ class PE:
             # still have a valid PE file
             self.__warnings.append(
                 "Invalid resources directory. Can't parse "
-                "directory data at RVA: 0x%x" % rva
+                f"directory data at RVA: {rva:#x}"
             )
             return None
 
@@ -4667,8 +4678,7 @@ class PE:
         if number_of_entries > MAX_ALLOWED_ENTRIES:
             self.__warnings.append(
                 "Error parsing the resources directory. "
-                "The directory contains %d entries (>%s)"
-                % (number_of_entries, MAX_ALLOWED_ENTRIES)
+                f"The directory contains {number_of_entries} entries (>{MAX_ALLOWED_ENTRIES})"
             )
             return None
 
@@ -4676,8 +4686,7 @@ class PE:
         if self.__total_resource_entries_count > MAX_RESOURCE_ENTRIES:
             self.__warnings.append(
                 "Error parsing the resources directory. "
-                "The file contains at least %d entries (>%d)"
-                % (self.__total_resource_entries_count, MAX_RESOURCE_ENTRIES)
+                f"The file contains at least {self.__total_resource_entries_count} entries (>{MAX_RESOURCE_ENTRIES})"
             )
             return None
 
@@ -4694,19 +4703,15 @@ class PE:
             ):
                 self.__resource_size_limit_reached = True
                 self.__warnings.append(
-                    "Resource size 0x%x exceeds file size 0x%x, overlapping "
-                    "resources found."
-                    % (
-                        self.__total_resource_bytes,
-                        self.__resource_size_limit_upperbounds,
-                    )
+                    f"Resource size {self.__total_resource_bytes:#x} exceeds file size "
+                    f"{self.__resource_size_limit_upperbounds:#x}, overlapping resources found."
                 )
 
             res = self.parse_resource_entry(rva)
             if res is None:
                 self.__warnings.append(
                     "Error parsing the resources directory, "
-                    "Entry %d is invalid, RVA = 0x%x. " % (idx, rva)
+                    f"Entry {idx} is invalid, RVA = {rva:#x}. "
                 )
                 break
 
@@ -4732,7 +4737,7 @@ class PE:
                         self.__warnings.append(
                             "Error parsing the resources directory, "
                             "attempting to read entry name. "
-                            "Entry names overlap 0x%x" % ustr_offset
+                            f"Entry names overlap {ustr_offset:#x}"
                         )
                         break
 
@@ -4747,7 +4752,7 @@ class PE:
                     self.__warnings.append(
                         "Error parsing the resources directory, "
                         "attempting to read entry name. "
-                        "Can't read unicode string at offset 0x%x" % ustr_offset
+                        f"Can't read unicode string at offset {ustr_offset:#x}"
                     )
 
             if res.DataIsDirectory:
@@ -4895,7 +4900,7 @@ class PE:
         except PEFormatError:
             self.__warnings.append(
                 "Error parsing a resource directory data entry, "
-                "the RVA is invalid: 0x%x" % rva
+                f"the RVA is invalid: {rva:#x}"
             )
             return None
 
@@ -5015,7 +5020,7 @@ class PE:
             self.__warnings.append(
                 "Error parsing the version information, "
                 "attempting to read VS_VERSION_INFO string. Can't "
-                "read unicode string at offset 0x%x" % ustr_offset
+                f"read unicode string at offset {ustr_offset:#x}"
             )
 
         if versioninfo_string is None:
@@ -5033,7 +5038,7 @@ class PE:
                 excerpt = excerpt[: excerpt.rfind("\\u")]
                 versioninfo_string = f"{excerpt} ... ({len(versioninfo_string)} bytes, too long to display)".encode()
             self.__warnings.append(
-                "Invalid VS_VERSION_INFO block: {0}".format(
+                "Invalid VS_VERSION_INFO block: {}".format(
                     versioninfo_string.decode("ascii").replace("\00", "\\00")
                 )
             )
@@ -5723,8 +5728,7 @@ class PE:
 
             if self.__total_import_symbols > MAX_IMPORT_SYMBOLS:
                 self.__warnings.append(
-                    "Error, too many imported symbols %d (>%s)"
-                    % (self.__total_import_symbols, MAX_IMPORT_SYMBOLS)
+                    f"Error, too many imported symbols {self.__total_import_symbols} (>{MAX_IMPORT_SYMBOLS})"
                 )
                 break
 
@@ -6651,7 +6655,7 @@ class PE:
                             for st_entry in entry.StringTable:
                                 [dump.add_line("  " + line) for line in st_entry.dump()]
                                 dump.add_line(
-                                    "  LangID: {0}".format(
+                                    "  LangID: {}".format(
                                         st_entry.LangID.decode(
                                             encoding, "backslashreplace_"
                                         )
@@ -6661,7 +6665,7 @@ class PE:
                                 for str_entry in sorted(st_entry.entries.items()):
                                     # try:
                                     dump.add_line(
-                                        "    {0}: {1}".format(
+                                        "    {}: {}".format(
                                             str_entry[0].decode(
                                                 encoding, "backslashreplace_"
                                             ),
@@ -6681,7 +6685,7 @@ class PE:
                                         for line in var_entry.dump()
                                     ]
                                     dump.add_line(
-                                        "    {0}: {1}".format(
+                                        "    {}: {}".format(
                                             next(iter(var_entry.entry.keys())).decode(
                                                 "utf-8", "backslashreplace_"
                                             ),
@@ -6707,7 +6711,7 @@ class PE:
                     )
                     if export.forwarder:
                         dump.add_line(
-                            " forwarder: {0}".format(
+                            " forwarder: {}".format(
                                 export.forwarder.decode(encoding, "backslashreplace_")
                             )
                         )
@@ -6723,7 +6727,7 @@ class PE:
                 # Print the name of the DLL if there are no imports.
                 if not module.imports:
                     dump.add(
-                        "  Name -> {0}".format(
+                        "  Name -> {}".format(
                             self.get_string_at_rva(module.struct.Name).decode(
                                 encoding, "backslashreplace_"
                             )
@@ -6735,7 +6739,7 @@ class PE:
                     if symbol.import_by_ordinal is True:
                         if symbol.name is not None:
                             dump.add(
-                                "{0}.{1} Ordinal[{2}] (Imported by Ordinal)".format(
+                                "{}.{} Ordinal[{}] (Imported by Ordinal)".format(
                                     module.dll.decode("utf-8"),
                                     symbol.name.decode("utf-8"),
                                     symbol.ordinal,
@@ -6743,13 +6747,13 @@ class PE:
                             )
                         else:
                             dump.add(
-                                "{0} Ordinal[{1}] (Imported by Ordinal)".format(
+                                "{} Ordinal[{}] (Imported by Ordinal)".format(
                                     module.dll.decode("utf-8"), symbol.ordinal
                                 )
                             )
                     else:
                         dump.add(
-                            "{0}.{1} Hint[{2:d}]".format(
+                            "{}.{} Hint[{:d}]".format(
                                 module.dll.decode(encoding, "backslashreplace_"),
                                 symbol.name.decode(encoding, "backslashreplace_"),
                                 symbol.hint,
@@ -6774,7 +6778,7 @@ class PE:
                 for bound_imp_ref in bound_imp_desc.entries:
                     dump.add_lines(bound_imp_ref.struct.dump(), 4)
                     dump.add_line(
-                        "DLL: {0}".format(
+                        "DLL: {}".format(
                             bound_imp_ref.name.decode(encoding, "backslashreplace_")
                         ),
                         4,
@@ -6790,14 +6794,14 @@ class PE:
                 for symbol in module.imports:
                     if symbol.import_by_ordinal is True:
                         dump.add(
-                            "{0} Ordinal[{1:d}] (Imported by Ordinal)".format(
+                            "{} Ordinal[{:d}] (Imported by Ordinal)".format(
                                 module.dll.decode(encoding, "backslashreplace_"),
                                 symbol.ordinal,
                             )
                         )
                     else:
                         dump.add(
-                            "{0}.{1} Hint[{2}]".format(
+                            "{}.{} Hint[{}]".format(
                                 module.dll.decode(encoding, "backslashreplace_"),
                                 symbol.name.decode(encoding, "backslashreplace_"),
                                 symbol.hint,
@@ -6877,7 +6881,7 @@ class PE:
                                     resource_id.directory.strings.items()
                                 ):
                                     dump.add_line(
-                                        "{0:6d}: {1}".format(
+                                        "{:6d}: {}".format(
                                             idx,
                                             res_string.encode(
                                                 "unicode-escape", "backslashreplace"
