@@ -3222,9 +3222,6 @@ class PE:
         self.OPTIONAL_HEADER.DATA_DIRECTORY = []
         offset = optional_header_offset + self.OPTIONAL_HEADER.sizeof()
 
-        self.NT_HEADERS.FILE_HEADER = self.FILE_HEADER
-        self.NT_HEADERS.OPTIONAL_HEADER = self.OPTIONAL_HEADER
-
         # Detect artificially reduced values in the NumberOfRvaAndSizes field
         directory_count = int(self.OPTIONAL_HEADER.NumberOfRvaAndSizes & 0x7FFFFFFF)
         directory_delta = max(0, (self.FILE_HEADER.SizeOfOptionalHeader
