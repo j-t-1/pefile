@@ -5,7 +5,7 @@ import pytest
 import pefile
 
 
-def make_pe(name=b"/4", strings=b".debug_info\0"):
+def make_pe(name: bytes=b"/4", strings: bytes=b".debug_info\0"):
     data = bytearray(512)
     data[:2] = b"MZ"
     struct.pack_into("<I", data, 0x3C, 0x80)
@@ -19,7 +19,7 @@ def make_pe(name=b"/4", strings=b".debug_info\0"):
     return bytes(data) + struct.pack("<I", len(strings) + 4) + strings
 
 
-def test_coff_long_section_name():
+def test_coff_long_section_name() -> None:
     data = make_pe()
     with pefile.PE(data=data) as pe:
         section = pe.sections[0]
@@ -42,7 +42,7 @@ def test_coff_long_section_name():
         b"//4",
     ],
 )
-def test_short_or_invalid_section_name(name):
+def test_short_or_invalid_section_name(name) -> None:
     with pefile.PE(data=make_pe(name)) as pe:
         assert pe.sections[0].get_name() == name
 
@@ -51,7 +51,7 @@ def test_short_or_invalid_section_name(name):
     ("strings", "expected"),
     [(b"\xffname\0", b"\xffname"), (b"first\0second\0", b"first"), (b"\0", b"")],
 )
-def test_resolved_names_are_bounded_bytes(strings, expected):
+def test_resolved_names_are_bounded_bytes(strings, expected) -> None:
     with pefile.PE(data=make_pe(strings=strings)) as pe:
         assert pe.sections[0].get_name() == expected
 
@@ -60,7 +60,7 @@ def test_resolved_names_are_bounded_bytes(strings, expected):
     "change",
     ["missing", "truncated-header", "truncated-table", "small-length", "unterminated"],
 )
-def test_invalid_string_table_retains_raw_name(change):
+def test_invalid_string_table_retains_raw_name(change) -> None:
     data = bytearray(make_pe())
     if change == "missing":
         struct.pack_into("<I", data, 0x84 + 8, 0)
@@ -76,7 +76,7 @@ def test_invalid_string_table_retains_raw_name(change):
         assert pe.sections[0].get_name() == b"/4"
 
 
-def test_string_table_follows_symbol_records():
+def test_string_table_follows_symbol_records() -> None:
     data = bytearray(make_pe())
     struct.pack_into("<I", data, 0x84 + 12, 2)
     data[512:512] = bytes(36)
@@ -84,6 +84,6 @@ def test_string_table_follows_symbol_records():
         assert pe.sections[0].get_name() == b".debug_info"
 
 
-def test_offset_selects_later_string():
+def test_offset_selects_later_string() -> None:
     with pefile.PE(data=make_pe(b"/10", b"first\0second\0")) as pe:
         assert pe.sections[0].get_name() == b"second"

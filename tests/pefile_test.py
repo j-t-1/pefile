@@ -57,7 +57,7 @@ def _load_test_files():
     "pe_filename",
     _load_test_files(),
 )
-def test_pe_image_regression_test(pe_filename, REGEN=False):
+def test_pe_image_regression_test(pe_filename, REGEN: bool=False) -> None:
     pe = pefile.PE(pe_filename)
     pe_file_data = pe.dump_info()
     pe.dump_dict()  # Make sure that it does not fail
@@ -123,7 +123,7 @@ class TestPEFile(unittest.TestCase):
 
     maxDiff = None
 
-    def test_directory_entry_architecture_alias(self):
+    def test_directory_entry_architecture_alias(self) -> None:
         """Keep the standalone directory alias regression from this repository."""
         self.assertEqual(pefile.DIRECTORY_ENTRY["IMAGE_DIRECTORY_ENTRY_COPYRIGHT"], 7)
         self.assertEqual(
@@ -131,7 +131,7 @@ class TestPEFile(unittest.TestCase):
             pefile.DIRECTORY_ENTRY["IMAGE_DIRECTORY_ENTRY_COPYRIGHT"],
         )
 
-    def test_get_rich_header_hash(self):
+    def test_get_rich_header_hash(self) -> None:
         """Verify the RICH_HEADER hashes."""
 
         control_file = REGRESSION_TESTS_DIR / "kernel32.dll"
@@ -165,7 +165,7 @@ class TestPEFile(unittest.TestCase):
 
         self.assertRaises(Exception, pe.get_rich_header_hash, algorithm="badalgo")
 
-    def test_selective_loading_integrity(self):
+    def test_selective_loading_integrity(self) -> None:
         """Verify integrity of loading the separate elements of the file as
         opposed to do a single pass.
         """
@@ -184,7 +184,7 @@ class TestPEFile(unittest.TestCase):
         pe.close()
         pe_full.close()
 
-    def test_imphash(self):
+    def test_imphash(self) -> None:
         """Test imphash values."""
 
         self.assertEqual(
@@ -210,7 +210,7 @@ class TestPEFile(unittest.TestCase):
             "d0058544e4588b1b2290b7f4d830eb0a",
         )
 
-    def test_exphash(self):
+    def test_exphash(self) -> None:
         """Test exphash values."""
 
         self.assertEqual(
@@ -235,7 +235,7 @@ class TestPEFile(unittest.TestCase):
             "",
         )
 
-    def test_write_header_fields(self):
+    def test_write_header_fields(self) -> None:
         """Verify correct field data modification."""
 
         # Test version information writing
@@ -272,7 +272,7 @@ class TestPEFile(unittest.TestCase):
 
         pe.close()
 
-    def test_write_keeps_size_of_truncated_headers(self):
+    def test_write_keeps_size_of_truncated_headers(self) -> None:
         """Headers cut short by the end of the file are read zero padded,
         write() must not append that padding to an unmodified file.
         """
@@ -292,7 +292,7 @@ class TestPEFile(unittest.TestCase):
         pe.OPTIONAL_HEADER.DATA_DIRECTORY[1].VirtualAddress = 0x1000
         self.assertGreater(len(pe.write()), len(data))
 
-    def test_nt_headers_exception(self):
+    def test_nt_headers_exception(self) -> None:
         """pefile should fail parsing invalid data (missing NT headers)"""
 
         # Take a known good file.
@@ -305,7 +305,7 @@ class TestPEFile(unittest.TestCase):
 
         self.assertRaises(pefile.PEFormatError, pefile.PE, data=corrupted_data)
 
-    def test_dos_header_exception_large_data(self):
+    def test_dos_header_exception_large_data(self) -> None:
         """pefile should fail parsing 10KiB of invalid data
         (missing DOS header).
         """
@@ -317,7 +317,7 @@ class TestPEFile(unittest.TestCase):
         # is thrown
         self.assertRaises(pefile.PEFormatError, pefile.PE, data=data)
 
-    def test_dos_header_exception_small_data(self):
+    def test_dos_header_exception_small_data(self) -> None:
         """pefile should fail parsing 64 bytes of invalid data
         (missing DOS header).
         """
@@ -329,14 +329,14 @@ class TestPEFile(unittest.TestCase):
         # is thrown
         self.assertRaises(pefile.PEFormatError, pefile.PE, data=data)
 
-    def test_empty_file_exception(self):
+    def test_empty_file_exception(self) -> None:
         """pefile should fail parsing empty files."""
 
         # Take a known good file
         control_file = REGRESSION_TESTS_DIR / "empty_file"
         self.assertRaises(pefile.PEFormatError, pefile.PE, control_file)
 
-    def test_virtual_size_less_than_raw_size(self):
+    def test_virtual_size_less_than_raw_size(self) -> None:
         """File-alignment padding must not bleed into the memory-mapped image.
 
         When VirtualSize < SizeOfRawData the bytes beyond VirtualSize are
@@ -363,7 +363,7 @@ class TestPEFile(unittest.TestCase):
             "mapped image must not include raw file-padding past VirtualSize",
         )
 
-    def test_virtual_size_greater_than_raw_size(self):
+    def test_virtual_size_greater_than_raw_size(self) -> None:
         """Uninitialized BSS region must be zero-padded in the memory-mapped image.
 
         When SizeOfRawData < VirtualSize the bytes from SizeOfRawData up to
@@ -386,7 +386,7 @@ class TestPEFile(unittest.TestCase):
             "BSS region (VirtualSize - SizeOfRawData) must be zero-padded",
         )
 
-    def test_truncated_dynamic_relocation_table(self):
+    def test_truncated_dynamic_relocation_table(self) -> None:
         """A Dynamic Value Relocation Table (DVRT) header truncated by the end of the file must not raise.
 
         The load config points its DVRT at section offset 0x1000, but the file
@@ -413,7 +413,7 @@ class TestPEFile(unittest.TestCase):
             )
         )
 
-    def test_load_config_truncated_before_dvrt_fields(self):
+    def test_load_config_truncated_before_dvrt_fields(self) -> None:
         """A load config too small to hold the DVRT fields must not raise.
 
         parse_directory_load_config truncates the structure to the number of
@@ -439,14 +439,14 @@ class TestPEFile(unittest.TestCase):
                 self.assertIsNotNone(load_config_data)
                 self.assertIsNone(load_config_data.dynamic_relocations)
 
-    def test_relocated_memory_mapped_image(self):
+    def test_relocated_memory_mapped_image(self) -> None:
         """Test different rebasing methods produce the same image"""
 
         # Take a known good file
         control_file = REGRESSION_TESTS_DIR / "MSVBVM60.DLL"
         pe = pefile.PE(control_file)
 
-        def count_differences(data1, data2):
+        def count_differences(data1, data2) -> int:
             diff = 0
             for idx in range(len(data1)):
                 if data1[idx] != data2[idx]:
@@ -499,7 +499,7 @@ class TestPEFile(unittest.TestCase):
         # Ensure the original image stayed the same
         self.assertEqual(original_image_1, original_image_2)
 
-    def test_entry_point_retrieval_with_overlapping_sections(self):
+    def test_entry_point_retrieval_with_overlapping_sections(self) -> None:
         # Versions up to and including 114 would not handle overlapping
         # sections correctly. A section size could push the end address
         # beyond the start of the next section, in such cases the sections'
@@ -523,7 +523,7 @@ class TestPEFile(unittest.TestCase):
         #self.assertEqual(entry_point_data, good_ep_data)
         pass
 
-    def test_entry_point_retrieval_with_unusual_aligments(self):
+    def test_entry_point_retrieval_with_unusual_aligments(self) -> None:
         # Fixed a bug in pefile <= 1.2.10-93. Fixed in revision 94
         # http://code.google.com/p/pefile/source/detail?r=94
 
@@ -543,7 +543,7 @@ class TestPEFile(unittest.TestCase):
         #)
         pass
 
-    def test_entry_point_retrieval_with_unusual_PointerToRawData_values(self):
+    def test_entry_point_retrieval_with_unusual_PointerToRawData_values(self) -> None:
         # Fixed a bug in pefile <= 1.2.10-106. Fixed in revision 107
         # http://code.google.com/p/pefile/source/detail?r=107
 
@@ -611,7 +611,7 @@ class TestPEFile(unittest.TestCase):
         #    pe.__data__[0:10],
         #)
 
-    def test_low_alignment_section_pointer_to_raw_data(self):
+    def test_low_alignment_section_pointer_to_raw_data(self) -> None:
         # Issue #465: for low-alignment images (SectionAlignment < 0x1000) a
         # section's PointerToRawData must not be rounded down to a sector
         # boundary. Resource-only DLLs can have e.g. PointerToRawData 0x160 with
@@ -622,7 +622,7 @@ class TestPEFile(unittest.TestCase):
         self.assertTrue(hasattr(pe, "DIRECTORY_ENTRY_RESOURCE"))
         self.assertEqual([e.id for e in pe.DIRECTORY_ENTRY_RESOURCE.entries], [3])
 
-    def test_VS_VERSIONINFO_dword_aligment(self):
+    def test_VS_VERSIONINFO_dword_aligment(self) -> None:
         # Fixed a bug in pefile < 1.2.10-96. Fixed in revision 96:
         # http://code.google.com/p/pefile/source/detail?r=96
         # Was issue: 12
@@ -640,7 +640,7 @@ class TestPEFile(unittest.TestCase):
         #self.assertEqual(vs_fixedfileinfo_signature, good_vs_fixedfileinfo_signature)
         pass
 
-    def test_overlay_github_issue_104(self):
+    def test_overlay_github_issue_104(self) -> None:
         #control_file_pe = (
         #    REGRESSION_TESTS_DIR / "307a69414b203f1116db677b8bc07130ae2b72cf33cf2ae5a39bf1bd484b587c_overlay_issue_104"
         #)
@@ -656,7 +656,7 @@ class TestPEFile(unittest.TestCase):
         #self.assertEqual(overlay_offset, 93696)
         pass
 
-    def test_get_overlay_and_trimming(self):
+    def test_get_overlay_and_trimming(self) -> None:
         """Test method to retrieve overlay data and trim the PE"""
 
         #control_file_pe = REGRESSION_TESTS_DIR / "0x90_with_overlay_data.exe"
@@ -690,7 +690,7 @@ class TestPEFile(unittest.TestCase):
         # Ensure the overlay data is correct (should not be any in this case).
         #self.assertIsNone(pe.get_overlay())
 
-    def test_overlay_on_clipped_file(self):
+    def test_overlay_on_clipped_file(self) -> None:
         """A clipped (truncated) file has no overlay.
 
         Regression test for https://github.com/erocarrera/pefile/issues/378
@@ -726,7 +726,7 @@ class TestPEFile(unittest.TestCase):
         self.assertEqual(pe.get_overlay(), overlay[:-100])
         self.assertEqual(pe.trim(), data)
 
-    def test_unable_to_read_file(self):
+    def test_unable_to_read_file(self) -> None:
         """Attempting to open a file without read permission for the user
         should result in an error message.
         """
@@ -734,7 +734,7 @@ class TestPEFile(unittest.TestCase):
         control_file_pe = REGRESSION_TESTS_DIR / "fake_PE_no_read_permissions_issue_53"
         self.assertRaises(Exception, pefile.PE, control_file_pe)
 
-    def test_driver_check(self):
+    def test_driver_check(self) -> None:
         """Test the is_driver check"""
 
         # A 32 bit driver that imports DbgPrint from ntoskrnl.exe
@@ -759,7 +759,7 @@ class TestPEFile(unittest.TestCase):
         pe = pefile.PE(REGRESSION_TESTS_DIR / "cmd.exe")
         self.assertFalse(pe.is_driver())
 
-    def test_rebased_image(self):
+    def test_rebased_image(self) -> None:
         """Test correctness of rebased images"""
 
         # Take a known good file.
@@ -777,7 +777,7 @@ class TestPEFile(unittest.TestCase):
         # Ensure the rebased image is the same as the pre-generated one.
         #self.assertEqual(rebased_data, control_file_data)
 
-    def test_is_driver_and_is_exe_return_bool(self):
+    def test_is_driver_and_is_exe_return_bool(self) -> None:
         """Test is_driver and is_exe return False, not set() or 0"""
 
         pe = pefile.PE(REGRESSION_TESTS_DIR / "cmd.exe")
@@ -789,7 +789,7 @@ class TestPEFile(unittest.TestCase):
         ]
         self.assertIs(pe.is_exe(), expr2=False)
 
-    def test_checksum(self):
+    def test_checksum(self) -> None:
         """Verify correct calculation of checksum"""
 
         # Take a known good file
@@ -817,7 +817,7 @@ class TestPEFile(unittest.TestCase):
         self.assertTrue(pe.verify_checksum())
 
 
-def _low_alignment_resource_pe():
+def _low_alignment_resource_pe() -> bytes:
     """Minimal PE32 with SectionAlignment == FileAlignment == 0x10 and a single
     .rsrc section whose PointerToRawData (0x160) differs from its VirtualAddress
     (0x1a0), mirroring the resource-only DLL reported in issue #465.
@@ -856,7 +856,7 @@ def _low_alignment_resource_pe():
     return dos + b"PE\x00\x00" + coff + opt + section + res
 
 
-def _create_pe(virtual_size, size_of_raw_data):
+def _create_pe(virtual_size: int, size_of_raw_data: int):
     """Build a minimal PE32 with one section whose VirtualSize and SizeOfRawData differ.
 
     Reused by the memory-mapped-image tests below.

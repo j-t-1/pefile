@@ -12,11 +12,11 @@ ords = {
 }
 
 
-def format_ordinal(ord_val):
+def format_ordinal(ord_val) -> bytes:
     return f"ord{ord_val}".encode()
 
 
-def ordinal_lookup(libname, ord_val, make_name=False):
+def ordinal_lookup(libname, ord_val, make_name: bool=False) -> bytes | None:
     """Lookup a name for the given ordinal if it's in our database."""
     names = ords.get(libname.lower())
     if names is None:
@@ -40,11 +40,11 @@ imphash_ords = {
 }
 
 
-def imphash_format_ordinal(ord_val):
+def imphash_format_ordinal(ord_val) -> bytes:
     return f"ord{ord_val}".encode()
 
 
-def imphash_ordinal_lookup(libname, ord_val, make_name=False):
+def imphash_ordinal_lookup(libname, ord_val, make_name: bool=False) -> bytes | None:
     """
     Lookup a name for the given ordinal using the imphash-specific database.
 

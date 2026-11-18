@@ -1,9 +1,10 @@
+from peutils import SignatureDatabase
 import unittest
 
 import peutils
 
 
-def database_for(pattern, name="sample", section_start_only=False):
+def database_for(pattern: str, name: str="sample", section_start_only=False) -> SignatureDatabase:
     return peutils.SignatureDatabase(
         data=(
             f"[{name}]\nsignature = {pattern}\nep_only = true\n"
@@ -13,7 +14,7 @@ def database_for(pattern, name="sample", section_start_only=False):
 
 
 class TestNibbleWildcards(unittest.TestCase):
-    def test_high_nibble_wildcard(self):
+    def test_high_nibble_wildcard(self) -> None:
         database = database_for("?a 42")
         for byte in range(256):
             with self.subTest(byte=byte):
@@ -23,7 +24,7 @@ class TestNibbleWildcards(unittest.TestCase):
                 else:
                     self.assertEqual(result, [])
 
-    def test_low_nibble_wildcard(self):
+    def test_low_nibble_wildcard(self) -> None:
         database = database_for("a? 42")
         for byte in range(256):
             with self.subTest(byte=byte):
@@ -33,14 +34,14 @@ class TestNibbleWildcards(unittest.TestCase):
                 else:
                     self.assertEqual(result, [])
 
-    def test_nibble_wildcards_at_end(self):
+    def test_nibble_wildcards_at_end(self) -> None:
         for pattern, data in [("42 A?", b"B\xab"), ("42 ?A", b"B\xba")]:
             with self.subTest(pattern=pattern):
                 database = database_for(pattern)
                 self.assertEqual(database.match_data(data), (0, [["sample"]]))
                 self.assertEqual(database.match_data(data[:1]), [])
 
-    def test_mixed_wildcards_and_exact_matches(self):
+    def test_mixed_wildcards_and_exact_matches(self) -> None:
         database = database_for("A? ?? ?F 42", "wildcards")
         database.load(data="[exact]\nsignature = AB 12 CF 42\nep_only = true\n")
         self.assertEqual(
@@ -50,21 +51,21 @@ class TestNibbleWildcards(unittest.TestCase):
         self.assertEqual(database.match_data(b"\xab\x12\xcfC"), [])
         self.assertEqual(database.match_data(b"\xab\x12\xcf"), [])
 
-    def test_section_start_matching(self):
+    def test_section_start_matching(self) -> None:
         database = database_for("A? ?F", section_start_only=True)
         self.assertEqual(
             database.match_data(b"\xab\xcf", section_start_only=True),
             (0, [["sample"]]),
         )
 
-    def test_load_nibbles_after_exact_signatures(self):
+    def test_load_nibbles_after_exact_signatures(self) -> None:
         database = database_for("AB CF", "exact")
         self.assertEqual(database.match_data(b"\xab\xcf"), (0, [["exact"]]))
         database.load(data="[nibbles]\nsignature = A? ?F\nep_only = true\n")
         result = database.match_data(b"\xab\xcf")
         self.assertEqual(result, (0, [["nibbles"], ["exact"]]))
 
-    def test_existing_byte_wildcard(self):
+    def test_existing_byte_wildcard(self) -> None:
         database = database_for("41 ?? 42")
         self.assertEqual(database.match_data(b"A\xffB"), (0, [["sample"]]))
         self.assertEqual(database.match_data(b"A\xffC"), [])

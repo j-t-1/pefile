@@ -6,7 +6,7 @@ import pefile
 
 
 class TestImportRepetitionLimit(unittest.TestCase):
-    def parse_repeated_imports(self, data, count, **options):
+    def parse_repeated_imports(self, data, count: int, **options):
         with pefile.PE(data=bytes(data), fast_load=True, **options) as pe:
             size = 4 if pe.PE_TYPE == pefile.OPTIONAL_HEADER_MAGIC_PE else 8
             rva = pe.sections[0].VirtualAddress
@@ -23,13 +23,13 @@ class TestImportRepetitionLimit(unittest.TestCase):
                 self.assertTrue(all(entry.name == b"repeated_import" for entry in imports))
             return imports
 
-    def test_default_limit(self):
+    def test_default_limit(self) -> None:
         for data in (PE_32, PE_64):
             with self.subTest(bits=32 if data is PE_32 else 64):
                 self.assertEqual(len(self.parse_repeated_imports(data, 15)), 15)
                 self.assertEqual(self.parse_repeated_imports(data, 19), [])
 
-    def test_higher_limit(self):
+    def test_higher_limit(self) -> None:
         for data in (PE_32, PE_64):
             with self.subTest(bits=32 if data is PE_32 else 64):
                 self.assertEqual(
@@ -41,7 +41,7 @@ class TestImportRepetitionLimit(unittest.TestCase):
                     [],
                 )
 
-    def test_lower_limit(self):
+    def test_lower_limit(self) -> None:
         for data in (PE_32, PE_64):
             with self.subTest(bits=32 if data is PE_32 else 64):
                 self.assertEqual(
@@ -49,7 +49,7 @@ class TestImportRepetitionLimit(unittest.TestCase):
                     [],
                 )
 
-    def test_limit_is_per_instance(self):
+    def test_limit_is_per_instance(self) -> None:
         for data in (PE_32, PE_64):
             self.assertEqual(
                 len(self.parse_repeated_imports(data, 19, max_repeated_import_addresses=20)),

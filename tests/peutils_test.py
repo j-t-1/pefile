@@ -7,7 +7,7 @@ import peutils
 
 
 class TestSignatureGeneration(unittest.TestCase):
-    def test_entry_point_signature_round_trip(self):
+    def test_entry_point_signature_round_trip(self) -> None:
         for data in (PE_32, PE_64):
             for buffer_type in (bytes, bytearray):
                 with self.subTest(
@@ -30,7 +30,7 @@ class TestSignatureGeneration(unittest.TestCase):
                         database.match_data(payload), (0, [["sample"]])
                     )
 
-    def test_section_signature_round_trip(self):
+    def test_section_signature_round_trip(self) -> None:
         for data in (PE_32, PE_64):
             with self.subTest(bits=32 if data is PE_32 else 64):
                 with pefile.PE(data=bytes(data), fast_load=True) as pe:
@@ -53,7 +53,7 @@ class TestSignatureGeneration(unittest.TestCase):
                         (0, [["sample Section(1/1,.test)"]]),
                     )
 
-    def test_skip_short_sections(self):
+    def test_skip_short_sections(self) -> None:
         with pefile.PE(data=bytes(PE_32), fast_load=True) as pe:
             pe.sections[0].SizeOfRawData = 3
             self.assertEqual(
