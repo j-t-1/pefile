@@ -857,7 +857,7 @@ class TestPEFile(unittest.TestCase):
             Exception,
             match=(
                 r"^[Errno 2] No such file or directory: "
-                rf"{re.escape('/home/runner/work/pefile/pefile/pefile\-tests/tests/data/fake_PE_no_read_permissions_issue_53')}$"
+                rf"{re.escape('/home/runner/work/pefile/pefile/pefile-tests/tests/data/fake_PE_no_read_permissions_issue_53'$)}"
             )
         ):
             pefile.PE(control_file_pe)
