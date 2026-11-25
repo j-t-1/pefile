@@ -152,7 +152,8 @@ class TestPEFile(unittest.TestCase):
             "0059570db34b87f56a8359c1847fd3dd406fcf1d0a53fd1981fe519f1b1ede80",
         )
 
-        self.assertRaises(Exception, pe.get_rich_header_hash, algorithm="badalgo")
+        with pytest.raises(Exception, match="Invalid hashing algorithm specified"):
+            pe.get_rich_header_hash(algorithm="badalgo")
 
     def test_selective_loading_integrity(self):
         """Verify integrity of loading the separate elements of the file as
@@ -381,7 +382,8 @@ class TestPEFile(unittest.TestCase):
         pe_header_offest = pe.DOS_HEADER.e_lfanew
         corrupted_data = pe.__data__[:pe_header_offest] + b"\0" * (1024 * 10)
 
-        self.assertRaises(pefile.PEFormatError, pefile.PE, data=corrupted_data)
+        with pytest.raises(pefile.PEFormatError):
+            pefile.PE(data=corrupted_data)
 
     def test_dos_header_exception_large_data(self):
         """Parsing 10KiB of invalid data should fail (missing DOS header)."""
@@ -391,7 +393,8 @@ class TestPEFile(unittest.TestCase):
 
         # Attempt to parse data and verify PE header, a PEFormatError exception
         # is thrown
-        self.assertRaises(pefile.PEFormatError, pefile.PE, data=data)
+        with pytest.raises(pefile.PEFormatError):
+            pefile.PE(data=data)
 
     def test_dos_header_exception_small_data(self):
         """Parsing 64 bytes of invalid data should fail (missing DOS header)."""
@@ -401,14 +404,16 @@ class TestPEFile(unittest.TestCase):
 
         # Attempt to parse data and verify PE header a PEFormatError exception
         # is thrown
-        self.assertRaises(pefile.PEFormatError, pefile.PE, data=data)
+        with pytest.raises(pefile.PEFormatError):
+            pefile.PE(data=data)
 
     def test_empty_file_exception(self):
         """Empty files should fail parsing."""
 
         # Take a known good file
         control_file = REGRESSION_TESTS_DIR / "empty_file"
-        self.assertRaises(pefile.PEFormatError, pefile.PE, control_file)
+        with pytest.raises(pefile.PEFormatError):
+            pefile.PE(control_file)
 
     def test_virtual_size_less_than_raw_size(self):
         """File-alignment padding must not bleed into the memory-mapped image.
@@ -847,7 +852,8 @@ class TestPEFile(unittest.TestCase):
         """
 
         control_file_pe = REGRESSION_TESTS_DIR / "fake_PE_no_read_permissions_issue_53"
-        self.assertRaises(Exception, pefile.PE, control_file_pe)
+        with pytest.raises(Exception, match="expected message"):
+            pefile.PE(control_file_pe)
 
     def test_is_driver(self):
         """Test the is_driver check."""
