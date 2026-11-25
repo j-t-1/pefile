@@ -1,5 +1,6 @@
 import difflib
 import os
+import re
 import struct
 import sys
 import unittest
@@ -855,11 +856,12 @@ class TestPEFile(unittest.TestCase):
         with pytest.raises(
             Exception,
             match=(
-                r"[Errno 2] No such file or directory: "
-                r"'/home/runner/work/pefile/pefile/pefile-tests/tests/data/fake_PE_no_read_permissions_issue_53'"
+                rf"^[Errno 2] No such file or directory: "
+                rf"{re.escape('/home/runner/work/pefile/pefile/pefile-tests/tests/data/fake_PE_no_read_permissions_issue_53')}$"
             )
         ):
             pefile.PE(control_file_pe)
+
 
     def test_is_driver(self):
         """Test the is_driver check."""
